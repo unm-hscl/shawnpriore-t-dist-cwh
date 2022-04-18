@@ -13,7 +13,6 @@ gravitational_constant       = 6.673e-20;                                       
 celestial_mass               = 5.9472e24;                                       % kg
 gravitational_body           = gravitational_constant * celestial_mass;         % km^3 sec^-2
 orbit_ang_vel                = sqrt(gravitational_body / orbital_radius^3);     % rad sec^-2
-craft_mass                   = 100;                                             % kg
 
 % Continuous-time LTI CWH unforced dynamics e^{At}
 e_power_At = @(t) [ 
@@ -26,35 +25,34 @@ e_power_At = @(t) [
     ];
 
 % Discrete-time system is Phi(T_s) for sampling time T_s since the system is time-invariant
-Ad_6d = e_power_At(sampling_period);
-Ad = Ad_6d([1,2,4,5],[1,2,4,5]);
+Ad = e_power_At(sampling_period);
 
 % Impulse control
-Bd = Ad*[zeros(2); eye(2)];
+Bd = Ad*[zeros(3); eye(3)];
 
 %% problem set up
 time_horizon = 8;
 
 % initial states
 % format: x, y, z,  x., y., z.
-x_0_a = [90;  -5; 0; 0] ; % satellite A
-x_0_b = [95;   5; 0; 0] ; % satellite B
-x_0_c = [100; -5; 0; 0] ; % satellite C
-x_0_d = [105;  5; 0; 0] ; % satellite E
-x_0_e = [110; -5; 0; 0] ; % satellite D
+x_0_a = [90;  -5; 0; 0; 0; 0] ; % satellite A
+x_0_b = [95;   5; 0; 0; 0; 0] ; % satellite B
+x_0_c = [100; -5; 0; 0; 0; 0] ; % satellite C
+x_0_d = [105;  5; 0; 0; 0; 0] ; % satellite E
+x_0_e = [110; -5; 0; 0; 0; 0] ; % satellite D
 
 % target sets
 % format: x, y, z, x., y., z.
-target_set_a = Polyhedron('lb', [-7.5;   -10; -0.01; -0.01], ... 
-                          'ub', [-2.5;    -5;  0.01;  0.01]);  
-target_set_b = Polyhedron('lb', [-12.5;    -2.5; -0.01; -0.01], ...
-                          'ub', [-7.5;     2.5;  0.01;  0.01]);    
-target_set_c = Polyhedron('lb', [-7.5;     5; -0.01; -0.01], ... 
-                          'ub', [-2.5;    10;  0.01;  0.01]);   
-target_set_d = Polyhedron('lb', [ 2.5;  -7.5; -0.01; -0.01], ...
-                          'ub', [ 7.5;  -2.5;  0.01;  0.01]);    
-target_set_e = Polyhedron('lb', [ 2.5;   2.5; -0.01; -0.01], ... 
-                          'ub', [ 7.5;   7.5;  0.01;  0.01]);   
+target_set_a = Polyhedron('lb', [-7.5;   -10; -2.5; -0.01; -0.01; -0.01], ... 
+                          'ub', [-2.5;    -5;  2.5;  0.01; 0.01;  0.01]);  
+target_set_b = Polyhedron('lb', [-12.5; -2.5; -2.5; -0.01; -0.01; -0.01], ...
+                          'ub', [-7.5;   2.5;  2.5;  0.01; 0.01;  0.01]);    
+target_set_c = Polyhedron('lb', [-7.5;     5; -2.5; -0.01; -0.01; -0.01], ... 
+                          'ub', [-2.5;    10;  2.5;  0.01; 0.01;  0.01]);   
+target_set_d = Polyhedron('lb', [ 2.5;  -7.5; -2.5; -0.01; -0.01; -0.01], ...
+                          'ub', [ 7.5;  -2.5;  2.5;  0.01; 0.01;  0.01]);    
+target_set_e = Polyhedron('lb', [ 2.5;   2.5; -2.5; -0.01; -0.01; -0.01], ... 
+                          'ub', [ 7.5;   7.5;  2.5;  0.01; 0.01;  0.01]);   
                       
 n_lin_state_a = size(target_set_a.A,1);
 n_lin_state_b = size(target_set_b.A,1);
@@ -63,8 +61,8 @@ n_lin_state_d = size(target_set_d.A,1);
 n_lin_state_e = size(target_set_e.A,1);
                       
 % Input space
-input_space = Polyhedron('lb', [ -3;   -3], ... 
-                          'ub', [ 3;    3]);                         
+input_space = Polyhedron('lb', [ -3; -3; -3], ... 
+                          'ub', [ 3;  3;  3]);                         
 
 input_space_A = blkdiag(input_space.A);
 for i=1:(time_horizon-1)
@@ -74,11 +72,11 @@ end
 input_space_b = repmat(input_space.b, time_horizon,1);
 
 % collision avoid region radius
-r = 10;
+r = 5;
 
 % safety threshold
-safety_target       = 0.9; 
-safety_collision    = 0.9;
+safety_target       = 0.8; 
+safety_collision    = 0.8;
 
 
 
@@ -99,8 +97,8 @@ end
 
 
 %% disturbance set up
-mu = zeros(4,1);
-cov = diag([10^-4, 10^-4, 5*10^-8, 5*10^-8]);
+mu = zeros(6,1);
+cov = diag([10^-4, 10^-4, 10^-4, 5*10^-8, 5*10^-8, 5*10^-8]);
 psi = cov;
 for i=1:(time_horizon-1)
     psi = blkdiag(psi, cov);
@@ -110,16 +108,16 @@ nu = 10;
 Cw_psi_Cw = Wd_concat * psi * Wd_concat';
 
 % multiplier for target set
-scaled_sigma_a_vec = diag(target_set_a.A * Cw_psi_Cw(end-3:end,end-3:end) * target_set_a.A').^(1/2);
-scaled_sigma_b_vec = diag(target_set_b.A * Cw_psi_Cw(end-3:end,end-3:end) * target_set_b.A').^(1/2);
-scaled_sigma_c_vec = diag(target_set_c.A * Cw_psi_Cw(end-3:end,end-3:end) * target_set_c.A').^(1/2);
-scaled_sigma_d_vec = diag(target_set_d.A * Cw_psi_Cw(end-3:end,end-3:end) * target_set_d.A').^(1/2);
-scaled_sigma_e_vec = diag(target_set_e.A * Cw_psi_Cw(end-3:end,end-3:end) * target_set_e.A').^(1/2);
+scaled_sigma_a_vec = diag(target_set_a.A * Cw_psi_Cw(end-5:end,end-5:end) * target_set_a.A').^(1/2);
+scaled_sigma_b_vec = diag(target_set_b.A * Cw_psi_Cw(end-5:end,end-5:end) * target_set_b.A').^(1/2);
+scaled_sigma_c_vec = diag(target_set_c.A * Cw_psi_Cw(end-5:end,end-5:end) * target_set_c.A').^(1/2);
+scaled_sigma_d_vec = diag(target_set_d.A * Cw_psi_Cw(end-5:end,end-5:end) * target_set_d.A').^(1/2);
+scaled_sigma_e_vec = diag(target_set_e.A * Cw_psi_Cw(end-5:end,end-5:end) * target_set_e.A').^(1/2);
 
 % multiplier for collision avoidance
 max_sigma = zeros(time_horizon-1,1);
 for i = 1:(time_horizon-1)
-    index = 4*(i-1) + (1:2); 
+    index = 4*(i-1) + (1:3); 
     max_sigma(i) = 2 * nu * max(eig(Cw_psi_Cw(index, index)));
 end
 
@@ -131,7 +129,7 @@ by = 5e-6; % step size
 approx_to = .99995;
 approx_from = .5;
 tolerance = 1e-1;
-linearize_from = 0.9;
+linearize_from = safety_collision;
 
 lb_approx = 1 - approx_to;
 ub_approx = 1 - linearize_from;
@@ -180,11 +178,11 @@ cvx_precision default
 
 % input initilizations
 
-U_a_p = zeros(2*time_horizon,1);
-U_b_p = zeros(2*time_horizon,1);
-U_c_p = zeros(2*time_horizon,1);
-U_d_p = zeros(2*time_horizon,1);
-U_e_p = zeros(2*time_horizon,1);
+U_a_p = zeros(3*time_horizon,1);
+U_b_p = zeros(3*time_horizon,1);
+U_c_p = zeros(3*time_horizon,1);
+U_d_p = zeros(3*time_horizon,1);
+U_e_p = zeros(3*time_horizon,1);
 
 mean_X_a_no_input = Ad_concat * x_0_a;
 mean_X_b_no_input = Ad_concat * x_0_b;
@@ -205,29 +203,29 @@ start_time = tic;
 while k <= kmax 
 
     % update collision avoid probabilities and gradient
-    [g_ab, del_g_ab] = update_g(mean_X_a, mean_X_b, Bd_concat, time_horizon-1, r, 4);
-    [g_ac, del_g_ac] = update_g(mean_X_a, mean_X_c, Bd_concat, time_horizon-1, r, 4);
-    [g_ad, del_g_ad] = update_g(mean_X_a, mean_X_d, Bd_concat, time_horizon-1, r, 4);
-    [g_ae, del_g_ae] = update_g(mean_X_a, mean_X_e, Bd_concat, time_horizon-1, r, 4);
-    [g_bc, del_g_bc] = update_g(mean_X_b, mean_X_c, Bd_concat, time_horizon-1, r, 4);
-    [g_bd, del_g_bd] = update_g(mean_X_b, mean_X_d, Bd_concat, time_horizon-1, r, 4);
-    [g_be, del_g_be] = update_g(mean_X_b, mean_X_e, Bd_concat, time_horizon-1, r, 4);
-    [g_cd, del_g_cd] = update_g(mean_X_c, mean_X_d, Bd_concat, time_horizon-1, r, 4);
-    [g_ce, del_g_ce] = update_g(mean_X_c, mean_X_e, Bd_concat, time_horizon-1, r, 4);
-    [g_de, del_g_de] = update_g(mean_X_d, mean_X_e, Bd_concat, time_horizon-1, r, 4);
+    [g_ab, del_g_ab] = update_g(mean_X_a, mean_X_b, Bd_concat, time_horizon-1, r, 6);
+    [g_ac, del_g_ac] = update_g(mean_X_a, mean_X_c, Bd_concat, time_horizon-1, r, 6);
+    [g_ad, del_g_ad] = update_g(mean_X_a, mean_X_d, Bd_concat, time_horizon-1, r, 6);
+    [g_ae, del_g_ae] = update_g(mean_X_a, mean_X_e, Bd_concat, time_horizon-1, r, 6);
+    [g_bc, del_g_bc] = update_g(mean_X_b, mean_X_c, Bd_concat, time_horizon-1, r, 6);
+    [g_bd, del_g_bd] = update_g(mean_X_b, mean_X_d, Bd_concat, time_horizon-1, r, 6);
+    [g_be, del_g_be] = update_g(mean_X_b, mean_X_e, Bd_concat, time_horizon-1, r, 6);
+    [g_cd, del_g_cd] = update_g(mean_X_c, mean_X_d, Bd_concat, time_horizon-1, r, 6);
+    [g_ce, del_g_ce] = update_g(mean_X_c, mean_X_e, Bd_concat, time_horizon-1, r, 6);
+    [g_de, del_g_de] = update_g(mean_X_d, mean_X_e, Bd_concat, time_horizon-1, r, 6);
 
     cvx_begin quiet
-        variable U_a(2 * time_horizon,1);
-        variable U_b(2 * time_horizon,1);
-        variable U_c(2 * time_horizon,1);
-        variable U_d(2 * time_horizon,1);
-        variable U_e(2 * time_horizon,1);
+        variable U_a(3 * time_horizon,1);
+        variable U_b(3 * time_horizon,1);
+        variable U_c(3 * time_horizon,1);
+        variable U_d(3 * time_horizon,1);
+        variable U_e(3 * time_horizon,1);
 
-        variable mean_X_a(4 * time_horizon, 1);
-        variable mean_X_b(4 * time_horizon, 1);
-        variable mean_X_c(4 * time_horizon, 1);
-        variable mean_X_d(4 * time_horizon, 1);
-        variable mean_X_e(4 * time_horizon, 1);
+        variable mean_X_a(6 * time_horizon, 1);
+        variable mean_X_b(6 * time_horizon, 1);
+        variable mean_X_c(6 * time_horizon, 1);
+        variable mean_X_d(6 * time_horizon, 1);
+        variable mean_X_e(6 * time_horizon, 1);
 
         variable lambda_ab(time_horizon-1, 1);
         variable lambda_ac(time_horizon-1, 1);
@@ -400,11 +398,11 @@ while k <= kmax
             end
 
             % \mu_v in target shrunk by \beta
-            target_set_a.A * mean_X_a(end-3:end) + scaled_sigma_a_vec .* t_approx_a - target_set_a.b <= 0;
-            target_set_b.A * mean_X_b(end-3:end) + scaled_sigma_b_vec .* t_approx_b - target_set_b.b <= 0;
-            target_set_c.A * mean_X_c(end-3:end) + scaled_sigma_c_vec .* t_approx_c - target_set_c.b <= 0;
-            target_set_d.A * mean_X_d(end-3:end) + scaled_sigma_d_vec .* t_approx_c - target_set_d.b <= 0;
-            target_set_e.A * mean_X_e(end-3:end) + scaled_sigma_e_vec .* t_approx_c - target_set_e.b <= 0;
+            target_set_a.A * mean_X_a(end-5:end) + scaled_sigma_a_vec .* t_approx_a - target_set_a.b <= 0;
+            target_set_b.A * mean_X_b(end-5:end) + scaled_sigma_b_vec .* t_approx_b - target_set_b.b <= 0;
+            target_set_c.A * mean_X_c(end-5:end) + scaled_sigma_c_vec .* t_approx_c - target_set_c.b <= 0;
+            target_set_d.A * mean_X_d(end-5:end) + scaled_sigma_d_vec .* t_approx_c - target_set_d.b <= 0;
+            target_set_e.A * mean_X_e(end-5:end) + scaled_sigma_e_vec .* t_approx_c - target_set_e.b <= 0;
 
             % \delta_i,v not infinity
             delta_a >= lb_approx;
@@ -492,43 +490,61 @@ fprintf('Input Cost: %f \n', input_cost(k+1));
 %% make some plots
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 
-red = [0.6350 0.0780 0.1840];
-blue = [0.3010 0.7450 0.9330];
-green = [0.4660 0.6740 0.1880];
+F = [1, 2, 3, 4;
+     1, 2, 7, 8;
+     1, 4, 6, 8;
+     2, 3, 5, 7;
+     3, 4, 6, 5;
+     5, 6, 8, 7];
+
+red = [224 0 0] ./ 255;
+blue = [30 144 255] ./ 255;
+green = [0 170 85] ./ 255;
+purple = [118 0 168] ./ 255;
+grey = [46 52 59] ./ 255;
 
 fig = figure();
 fig.Units    = 'inches';
 fig.Position = [0.75,-1,13.5,11.5];
 hold on
-pa = plot([x_0_a(1); mean_X_a(1:4:end)], [x_0_a(2); mean_X_a(2:4:end)], 'Color', red, 'Marker', 'h', 'LineWidth', 1);
-pb = plot([x_0_b(1); mean_X_b(1:4:end)], [x_0_b(2); mean_X_b(2:4:end)], 'Color', blue, 'Marker', 'p', 'LineWidth', 1);
-pc = plot([x_0_c(1); mean_X_c(1:4:end)], [x_0_c(2); mean_X_c(2:4:end)], 'Color', green, 'Marker', '^', 'LineWidth', 1);
-pd = plot([x_0_d(1); mean_X_d(1:4:end)], [x_0_d(2); mean_X_d(2:4:end)], 'Color', red, 'Marker', 'h', 'LineWidth', 1);
-pe = plot([x_0_e(1); mean_X_e(1:4:end)], [x_0_e(2); mean_X_e(2:4:end)], 'Color', blue, 'Marker', 'p', 'LineWidth', 1);
-p4 = plot(0,0,'k', 'LineWidth', 2);
-p5 = plot(0,0,'k--', 'LineWidth', 2);
-p6 = plot( polyshape(Polyhedron(target_set_a.A([1;2;5;6],1:2), target_set_a.b([1;2;5;6])).V),...
+pa = plot3([x_0_a(1); mean_X_a(1:6:end)], [x_0_a(2); mean_X_a(2:6:end)], [x_0_a(3); mean_X_a(3:6:end)], 'Color', red, 'Marker', 'h', 'LineWidth', 1);
+pb = plot3([x_0_b(1); mean_X_b(1:6:end)], [x_0_b(2); mean_X_b(2:6:end)], [x_0_b(3); mean_X_b(3:6:end)], 'Color', blue, 'Marker', 'p', 'LineWidth', 1);
+pc = plot3([x_0_c(1); mean_X_c(1:6:end)], [x_0_c(2); mean_X_c(2:6:end)], [x_0_c(3); mean_X_c(3:6:end)], 'Color', green, 'Marker', '^', 'LineWidth', 1);
+pd = plot3([x_0_d(1); mean_X_d(1:6:end)], [x_0_d(2); mean_X_d(2:6:end)], [x_0_d(3); mean_X_d(3:6:end)], 'Color', purple, 'Marker', 'o', 'LineWidth', 1);
+pe = plot3([x_0_e(1); mean_X_e(1:6:end)], [x_0_e(2); mean_X_e(2:6:end)], [x_0_e(3); mean_X_e(3:6:end)], 'Color', grey, 'Marker', 's', 'LineWidth', 1);
+p1 = patch('Faces',F,'Vertices', Polyhedron(target_set_a.A([1;2;3;7;8;9],1:3), target_set_a.b([1;2;3;7;8;9])).V,...
     'FaceColor', red, ...
     'FaceAlpha',0.1); 
-plot( polyshape(Polyhedron(target_set_b.A([1;2;5;6],1:2), target_set_b.b([1;2;5;6])).V),...
+patch('Faces',F,'Vertices', Polyhedron(target_set_b.A([1;2;3;7;8;9],1:3), target_set_b.b([1;2;3;7;8;9])).V,...
     'FaceColor', blue, ...
     'FaceAlpha',0.1); 
-plot( polyshape(Polyhedron(target_set_c.A([1;2;5;6],1:2), target_set_c.b([1;2;5;6])).V),...
+patch('Faces',F,'Vertices', Polyhedron(target_set_c.A([1;2;3;7;8;9],1:3), target_set_c.b([1;2;3;7;8;9])).V,...
     'FaceColor', green, ...
     'FaceAlpha',0.1); 
-plot( polyshape(Polyhedron(target_set_d.A([1;2;5;6],1:2), target_set_d.b([1;2;5;6])).V),...
-    'FaceColor', blue, ...
+patch('Faces',F,'Vertices', Polyhedron(target_set_d.A([1;2;3;7;8;9],1:3), target_set_d.b([1;2;3;7;8;9])).V,...
+    'FaceColor', purple, ...
     'FaceAlpha',0.1); 
-plot( polyshape(Polyhedron(target_set_e.A([1;2;5;6],1:2), target_set_e.b([1;2;5;6])).V),...
-    'FaceColor', green, ...
+patch('Faces',F,'Vertices', Polyhedron(target_set_e.A([1;2;3;7;8;9],1:3), target_set_e.b([1;2;3;7;8;9])).V,...
+    'FaceColor', grey, ...
     'FaceAlpha',0.1); 
-p7 = plot(x_0_a(1), x_0_a(2), 'Color', 'k', 'Marker', 'h', 'MarkerFaceColor', 'k', 'LineStyle','none');
-plot(x_0_b(1), x_0_b(2), 'Color', 'k', 'Marker', 'p', 'MarkerFaceColor', 'k');
-plot(x_0_c(1), x_0_c(2), 'Color', 'k', 'Marker', '^', 'MarkerFaceColor', 'k');
+p2 = plot3(x_0_a(1), x_0_a(2), x_0_a(3), 'Color', 'k', 'Marker', 'h', 'MarkerFaceColor', 'k', 'LineStyle','none');
+plot3(x_0_b(1), x_0_b(2), x_0_b(3), 'Color', 'k', 'Marker', 'p', 'MarkerFaceColor', 'k');
+plot3(x_0_c(1), x_0_c(2), x_0_c(3), 'Color', 'k', 'Marker', '^', 'MarkerFaceColor', 'k');
+plot3(x_0_d(1), x_0_d(2), x_0_d(3), 'Color', 'k', 'Marker', 'o', 'MarkerFaceColor', 'k');
+plot3(x_0_e(1), x_0_e(2), x_0_e(3), 'Color', 'k', 'Marker', 's', 'MarkerFaceColor', 'k');
 
 xlabel('x (in meters)')
 ylabel('y (in meters)')
+zlabel('z (in meters)')
 drawnow()
-axis([-20 120 -20 120])
+axis([-20 120 -35 35 -35 35])
 hold off
-set(gca, 'OuterPosition', [0.025,0.025,0.975,0.925]);
+set(gca, 'OuterPosition', [0.025,(1-0.95/2)/2,0.95,0.95/2]);
+
+view(3)
+
+l = legend([pa,pb,pc,pd,pe,p1,p2], {'A', 'B', 'C', 'D', 'E', 'Target Set', 'Initial Location' },...
+    'Orientation','horizontal', ...
+    'Location', 'northoutside', ...
+    'NumColumns', 4, ...
+    'interpreter', 'latex');
