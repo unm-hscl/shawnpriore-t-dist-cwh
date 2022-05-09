@@ -6,8 +6,6 @@ cvx_clear;
 
 addpath '../'
 
-script_start = tic;
-
 %% setup system
 
 sampling_period              = 60*5;                                            % sec
@@ -75,8 +73,8 @@ n_lin_state = size(target_set_all_A,1);
                       
 % Input space
 u_max = 3;
-input_space = Polyhedron('lb', [ -u_max; -u_max; -u_max], ... 
-                          'ub', [ u_max;  u_max;  u_max]);                         
+input_space = Polyhedron('lb', [-u_max; -u_max; -u_max], ... 
+                         'ub', [ u_max;  u_max;  u_max]);                         
 
 input_space_A = blkdiag(input_space.A);
 for i=1:(time_horizon-1)
@@ -86,7 +84,7 @@ end
 input_space_b = repmat(input_space.b, time_horizon,1);
 
 % collision avoid region radius
-r = 5;
+r = 8;
 
 % safety threshold
 safety_target           = 0.8;  % in target set
@@ -387,7 +385,6 @@ total_time = toc(start_time);
 % make k not less than or equal to kmax
 k = min(k, kmax);
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 % print some useful information
 %%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -398,14 +395,13 @@ fprintf('Total Cost: %f \n', total_cost(k+1));
 fprintf('Slack Cost: %f \n', lambda_sum(k+1));
 fprintf('Input Cost: %f \n', input_cost(k+1));
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%
-% verify probabilities
-%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%
 if strcmpi(cvx_status, 'Failed') || strcmpi(cvx_status, 'Infeasible')
     return
 end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+% make plots
+%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 target_sets(1) = target_set_a;
 target_sets(2) = target_set_b;
@@ -416,5 +412,8 @@ target_sets(6) = target_set_f;
 target_sets(7) = target_set_g;
 make_relative_plots
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+% verify probabilities
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 [P_target, P_2v, P_1v] = verify_relative(mean_X, Wd_concat, psi, nu, time_horizon-1, target_sets, r, 10000)
-toc(script_start)
