@@ -18,6 +18,8 @@ colors = [224,   0,   0; % red
 plot_symbols = ['h', 'p', '^', 'o', 'v', '>', 'd', 's'];
 
 fig = figure();
+fig.Units    = 'inches';
+fig.Position = [0.75,-1,13.5,11.5];
 
 subplot(10,1,1);
 hold on 
@@ -45,8 +47,6 @@ hold off
 
 
 subplot(10,1,[2,5]);
-fig.Units    = 'inches';
-fig.Position = [0.75,-1,13.5,11.5];
 hold on
 for i = 1:vehicles
     plot([x_0(1,i); mean_X(1:6:end,i)], [x_0(2,i); mean_X(2:6:end,i)], 'Color', colors(i, :), 'Marker', plot_symbols(i));

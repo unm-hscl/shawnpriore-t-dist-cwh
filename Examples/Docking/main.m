@@ -27,7 +27,7 @@ e_power_At = @(t) [
 
 % Discrete-time system is Phi(T_s) for sampling time T_s since the system is time-invariant
 Ad = e_power_At(sampling_period);
-
+%%
 % Impulse control
 Bd = Ad*[zeros(3); eye(3)];
 
