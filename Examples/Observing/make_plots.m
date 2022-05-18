@@ -15,9 +15,9 @@ dcm = @(theta) [cos(theta), -sin(theta); sin(theta), cos(theta)];
 
 fig = figure();
 fig.Units    = 'inches';
-fig.Position = [0.75,-1,7.9,10];
+fig.Position = [1,1,19,8];
 
-subplot(10,1,1);
+subplot(7,2,[1 2]);
 hold on 
 plot(nan, nan, 'Color', colors(2, :), 'Marker', plot_symbols(1));
 plot(nan, nan, 'Color', colors(3, :), 'Marker', plot_symbols(2));
@@ -29,14 +29,14 @@ patch('Faces',F_xy,'Vertices', Polyhedron([-eye(2); eye(2)], ones(4,1)).V,...
     'FaceAlpha', 0); 
 
 
-p = nsidedpoly(1000, 'Center', [0 0], 'Radius', r);
-plot(p, 'EdgeColor', colors(1,:), 'FaceColor', 'white', 'LineStyle','--', 'FaceAlpha', 0)
+p = nsidedpoly(1000, 'Center', [100 0], 'Radius', r);
+plot(p, 'EdgeColor', colors(1,:), 'FaceColor', colors(1,:), 'LineStyle','--', 'FaceAlpha', 0.1)
 
 plot(x_0_deputy(1), nan, 'Color', 'k', 'Marker', 's', 'MarkerFaceColor', 'k', 'LineStyle','none');
 plots=get(gca, 'Children');
 
 legend([plots(6), plots(5), plots(4), plots(3), plots(2), plots(1)], ...
-     {'Proposed Method', 'Particle Control', 'Attitude Orientation', 'Target Set', 'Collision Avoidance Region', 'Initial Location' },...
+     {'Proposed Method', 'Particle Control', 'Sensor Direction', 'Target Set', 'Collision Avoidance Region', 'Initial Location' },...
     'Orientation','horizontal', ...
     'Location', 'south', ...
     'NumColumns', 3, ...
@@ -48,11 +48,11 @@ axis off
 hold off
 
 
-subplot(10,1,[2,5]);
+subplot(7,2,[3:2:14]);
 hold on
 
 p = nsidedpoly(1000, 'Center', [0 0], 'Radius', r);
-plot(p, 'EdgeColor', colors(1,:), 'FaceColor', 'white', 'LineStyle','--')
+plot(p, 'EdgeColor', colors(1,:), 'FaceColor', colors(1,:), 'LineStyle','--', 'FaceAlpha', 0.1)
 
 patch('Faces',F_xy,'Vertices', Polyhedron(target_set_2.A([1;2;7;8],1:2), target_set_2.b([1;2;7;8])).V,...
     'FaceColor', 'white', ...
@@ -97,16 +97,16 @@ p.MaxHeadSize=5;
 xlabel('x (in meters)')
 ylabel('y (in meters)')
  
-axis([-12 12 -12 4])
+axis([-14 12 -12 4])
 axis equal
 hold off
 
-subplot(10,1,[7,10]);
+subplot(7,2,[4:2:14]);
 hold on
 
 
 p = nsidedpoly(8, 'Center', [0 0], 'Radius', 8.659);
-plot(p, 'EdgeColor', colors(1,:), 'FaceColor', 'white', 'LineStyle','--')
+plot(p, 'EdgeColor', colors(1,:), 'FaceColor', colors(1,:), 'LineStyle','--', 'FaceAlpha', 0.1)
 
 patch('Faces',F_xy,'Vertices', Polyhedron(target_set_2.A([1;2;7;8],1:2), target_set_2.b([1;2;7;8])).V,...
     'FaceColor', 'white', ...
@@ -152,6 +152,6 @@ p.MaxHeadSize=5;
 xlabel('x (in meters)')
 ylabel('y (in meters)')
  
-axis([-12 12 -12 4])
+axis([-14 12 -12 4])
 axis equal
 hold off

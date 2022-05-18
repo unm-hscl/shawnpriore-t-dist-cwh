@@ -19,9 +19,9 @@ plot_symbols = ['h', 'p', '^', 'o', 'v', '>', 'd', 's'];
 
 fig = figure();
 fig.Units    = 'inches';
-fig.Position = [0.75,-1,13.5,11.5];
+fig.Position = [1,1,19,8];
 
-subplot(10,1,1);
+subplot(7,2,[1 2]);
 hold on 
 for i = 1:vehicles
     plot(nan, nan, 'Color', colors(i, :), 'Marker', plot_symbols(i));
@@ -46,7 +46,7 @@ axis off
 hold off
 
 
-subplot(10,1,[2,5]);
+subplot(7,2,[3:2:14]);
 hold on
 for i = 1:vehicles
     plot([x_0(1,i); mean_X(1:6:end,i)], [x_0(2,i); mean_X(2:6:end,i)], 'Color', colors(i, :), 'Marker', plot_symbols(i));
@@ -55,16 +55,11 @@ for i = 1:vehicles
         'FaceAlpha', 0.1); 
     plot(x_0(1,i), x_0(2,i), 'Color', 'k', 'Marker', plot_symbols(i), 'MarkerFaceColor', 'k', 'LineStyle','none');
 end
-
 xlabel('x (in meters)')
 ylabel('y (in meters)')
- 
 hold off
 
-subplot(10,1,[7,10]);
-axis on
-fig.Units    = 'inches';
-fig.Position = [0.75,-1,13.5,11.5];
+subplot(7,2,[4:2:14]);
 hold on
 for i = 1:vehicles
     
@@ -76,5 +71,4 @@ for i = 1:vehicles
 end
 xlabel('x (in meters)')
 ylabel('z (in meters)')
-
 hold off
