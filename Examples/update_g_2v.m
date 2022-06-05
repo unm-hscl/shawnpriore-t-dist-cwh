@@ -22,7 +22,7 @@ function [g, del_g] = update_g_2v(mu_1, mu_2, Cu, time_horizon, r, S)
         Cu_i = Cu(index, :);
         
         % calculate gradient of norm
-        gradient_g(i,:) =  mu_i' * (S') * S * Cu_i ./ norm(mu_i);
+        gradient_g(i,:) =  mu_i' * (S') * S * Cu_i ./ norm(S*mu_i);
     end
     
     % compile gradient w.r.t u_1 and u_2

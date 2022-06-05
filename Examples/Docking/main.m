@@ -192,7 +192,7 @@ quiet = 0;
 
 % Set defaults for cvx
 cvx_solver gurobi
-cvx_precision default
+cvx_precision high
 
 % initial input guess
 U_p = zeros(3*time_horizon, vehicles);

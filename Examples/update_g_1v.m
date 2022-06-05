@@ -20,7 +20,7 @@ function [g, del_g] = update_g_1v(mu, Cu, time_horizon, r, S)
         Cu_i = Cu(index, :);
         
         % calculate gradient of norm
-        del_g(i,:) =  mu_i' * (S') * S * Cu_i ./ norm(mu_i);
+        del_g(i,:) =  mu_i' * (S') * S * Cu_i ./ norm(S*mu_i);
     end
 end
 
