@@ -103,10 +103,13 @@ hold off
 
 subplot(7,2,[4:2:14]);
 hold on
-
+p = nsidedpoly(1000, 'Center', [0 0], 'Radius', r);
+plot(p, 'EdgeColor', colors(1,:), 'FaceColor', 'white', 'LineStyle','-', 'FaceAlpha', 0.1)
 
 p = nsidedpoly(8, 'Center', [0 0], 'Radius', 8.659);
 plot(p, 'EdgeColor', colors(1,:), 'FaceColor', colors(1,:), 'LineStyle','--', 'FaceAlpha', 0.1)
+
+
 
 patch('Faces',F_xy,'Vertices', Polyhedron(target_set_2.A([1;2;7;8],1:2), target_set_2.b([1;2;7;8])).V,...
     'FaceColor', 'white', ...
@@ -135,6 +138,8 @@ end
 
 plot([x_0_deputy(1); mean_X_pc(1:6:end)], [x_0_deputy(2); mean_X_pc(2:6:end)], 'Color', colors(3, :), 'Marker', plot_symbols(2));
 
+
+
 for i = 1:time_horizon
    index = 6 * (i-1) + [1:3];
    mu_i = mean_X_pc(index);
@@ -142,6 +147,7 @@ for i = 1:time_horizon
    p=quiver(mu_i(1), mu_i(2), vec(1), vec(2), 0, 'Color', colors(3, :));
    p.MaxHeadSize=5;
 end
+
 
 plot(x_0_deputy(1), x_0_deputy(2), 'Color', 'k', 'Marker', 's', 'MarkerFaceColor', 'k', 'LineStyle','none');
 p=quiver(x_0_deputy(1),x_0_deputy(2),0, -2, 0, 'Color', 'k');
